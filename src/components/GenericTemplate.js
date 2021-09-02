@@ -23,6 +23,7 @@ import HomeIcon from "@material-ui/icons/Home";
 import CloseIcon from '@material-ui/icons/Close';
 import ExploreIcon from '@material-ui/icons/Explore';
 import ShoppingCartIcon from "@material-ui/icons/ShoppingCart";
+import CloudQueueIcon from '@material-ui/icons/CloudQueue';
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
@@ -51,7 +52,7 @@ const useStyles = makeStyles(theme => ({
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
     color: "#ffffff",
-    backgroundColor: "#000000"
+    backgroundColor: "#000000",
   },
   menuButton: {
     marginRight: theme.spacing(2),
@@ -106,7 +107,7 @@ function GenericTemplate({
             <ListItemText primary="トップページ" />
           </ListItem>
         </Link>
-        <Link to="/yambarumap" className={classes.link}>
+        <Link to="/yambarumap" target="_blank" rel="noopener noreferrer" className={classes.link}>
           <ListItem button>
             <ListItemIcon>
               <ExploreIcon />
@@ -117,7 +118,7 @@ function GenericTemplate({
         <a href="https://www.webspecimanager.net/" target="_blank" rel="noopener noreferrer" className={classes.link}>
           <ListItem button>
             <ListItemIcon>
-              <ExploreIcon />
+              <CloudQueueIcon />
             </ListItemIcon>
             <ListItemText primary="標本DB管理サービスWebSpecimanager" />
           </ListItem>
@@ -184,15 +185,6 @@ function GenericTemplate({
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
           <Container maxWidth="lg" className={classes.container}>
-            <Typography
-              component="h2"
-              variant="h5"
-              color="inherit"
-              noWrap
-              className={classes.pageTitle}
-            >
-              {title}
-            </Typography>
             {children}
             <Box pt={4}>
               <Copyright />
