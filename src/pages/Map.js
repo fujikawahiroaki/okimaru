@@ -1,9 +1,28 @@
 import React, { useEffect } from "react";
 import L from "leaflet";
+import { makeStyles } from '@material-ui/core/styles';
+import Grid from '@material-ui/core/Grid';
+import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
 import { MapContainer, TileLayer, GeoJSON, useMap, Tooltip } from "react-leaflet";
 import YambaruNaturalPark from '../geojsons/yambaru_natural_park';
 import YambaruNationalForest from '../geojsons/yambaru_national_forest';
+import GenericTemplate from '../components/GenericTemplate';
 
+
+const useStyles = makeStyles((theme) => ({
+    root: {
+        flexGrow: 1,
+    },
+    paper: {
+        height: 140,
+        width: 100,
+    },
+    control: {
+        padding: theme.spacing(2),
+    },
+}));
 
 const YambaruNaturalParkLayer = () => {
     const [data, setData] = React.useState();
@@ -93,19 +112,32 @@ const YambaruNationalForestLayer = () => {
 
 const Map = (props) => {
     return (
-        <MapContainer
-            doubleClickZoom={false}
-            id="mapId"
-            zoom={18}
-            center={[128.252335, 26.737332]}
-        >
-            <YambaruNaturalParkLayer />
-            <YambaruNationalForestLayer />
-            <TileLayer
-                url="https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png"
-                attribution="地理院地図 https://maps.gsi.go.jp/development/ichiran.html"
-            />
-        </MapContainer>
+        <GenericTemplate title="やんばる昆虫調査補助マップ" >
+            <Grid container>
+                <Grid xs={8}>
+                    <Card>
+                        <CardContent>
+                            <MapContainer
+                                style={{ height: "100vh", width: "50vw" }}
+                                doubleClickZoom={false}
+                                id="mapId"
+                                zoom={18}
+                                center={[128.252335, 26.737332]}
+                            >
+                                <YambaruNaturalParkLayer />
+                                <YambaruNationalForestLayer />
+                                <TileLayer
+                                    url="https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png"
+                                    attribution="地理院地図 https://maps.gsi.go.jp/development/ichiran.html"
+                                />
+                            </MapContainer>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
+
+        </GenericTemplate>
+
     );
 };
 
