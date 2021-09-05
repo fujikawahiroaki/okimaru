@@ -26,7 +26,8 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { MapContainer, TileLayer, GeoJSON, useMap, Tooltip, Popup } from "react-leaflet";
 import YambaruNaturalPark from '../geojsons/yambaru_natural_park';
-import YambaruNationalForest from '../geojsons/yambaru_national_forest';
+import YambaruNationalForest from '../geojsons/yambaru_national_forest_shuban_ver';
+import YambaruNationalForestDetail from '../geojsons/yambaru_national_forest'
 import GenericTemplate from '../components/GenericTemplate';
 
 
@@ -315,13 +316,14 @@ const YambaruNaturalParkLayer = () => {
     }
 };
 
-
 const YambaruNationalForestLayer = () => {
     const [data, setData] = useState();
+    const [detailData, setDetailData] = useState();
+    const selectedRinpans = [];
     const map = useMap();
-    const selectedRinpan = [];
     useEffect(() => {
         setData(YambaruNationalForest);
+        setDetailData(YambaruNationalForestDetail);
     }, []);
     const mapPolygonColorToShuban = (shuban => {
         return shuban <= 46
@@ -340,7 +342,17 @@ const YambaruNationalForestLayer = () => {
             fillOpacity: 0
         });
     });
-    const seletedStyle = (feature => {
+    const detailStyle = (feature => {
+        return ({
+            fillColor: mapPolygonColorToShuban(feature.properties.shuban),
+            weight: 1,
+            opacity: 1,
+            color: mapPolygonColorToShuban(feature.properties.shuban),
+            dashArray: '2 5',
+            fillOpacity: 0
+        });
+    });
+    const selectedStyle = (feature => {
         return ({
             fillColor: mapPolygonColorToShuban(feature.properties.shuban),
             weight: 2,
@@ -353,15 +365,28 @@ const YambaruNationalForestLayer = () => {
     const onEachRinpan = (feature, layer) => {
         const shubanName = feature.properties.shuban;
         layer.on('mouseover', function (e) {
-            layer.bindTooltip(`${shubanName}`).openTooltip();
-            layer.setStyle({fillOpacity: 0.5})
+            layer.bindPopup(`${shubanName}`).openTooltip();
+            layer.setStyle({ fillOpacity: 0.5 })
         });
         layer.on('mouseout', function (e) {
-            layer.setStyle({fillOpacity: 0})
+            layer.setStyle({ fillOpacity: 0 })
         });
-        layer.on('click', function(e) {
-            layer.setStyle({fillOpacity: 0.8})
-            selectedRinpan.push(feature.properties.shouhanID)
+        layer.on('click', function (e) {
+            layer.setStyle({ fillOpacity: 0.8 })
+        });
+        layer.bindTooltip(`${shubanName}`, { permanent: true, direction: "center" }).openTooltip();
+    }
+    const onEachShouRinpan = (feature, layer) => {
+        const shubanName = feature.properties.shuban;
+        layer.on('mouseover', function (e) {
+            layer.bindPopup(`${shubanName}`).openTooltip();
+            layer.setStyle({ fillOpacity: 0.5 })
+        });
+        layer.on('mouseout', function (e) {
+            layer.setStyle({ fillOpacity: 0 })
+        });
+        layer.on('click', function (e) {
+            layer.setStyle({ fillOpacity: 0.8 })
         });
     }
     if (data) {
@@ -371,11 +396,19 @@ const YambaruNationalForestLayer = () => {
         console.log(geojsonObject);
         // end debugging
         return (
-            <GeoJSON
-                data={data}
-                style={style}
-                onEachFeature={onEachRinpan}
-            />)
+            <div>
+                <GeoJSON
+                    data={data}
+                    style={style}
+                    onEachFeature={onEachRinpan}
+                />
+                <GeoJSON
+                    data={detailData}
+                    style={detailStyle}
+                    onEachFeature={onEachShouRinpan}
+                />
+            </div>
+        )
     } else {
         return "データを読み込み中です...";
     }
