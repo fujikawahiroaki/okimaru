@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, memo, useCallback } from "react";
 import { Link as RouterLink } from 'react-router-dom';
 import L from "leaflet";
 import { makeStyles } from '@material-ui/core/styles';
@@ -321,6 +321,7 @@ const YambaruNationalForestLayer = () => {
     const [detailData, setDetailData] = useState();
     const selectedRinpans = [];
     const map = useMap();
+    const rinpanRef = useRef();
     useEffect(() => {
         setData(YambaruNationalForest);
         setDetailData(YambaruNationalForestDetail);
@@ -333,24 +334,47 @@ const YambaruNationalForestLayer = () => {
                 : '#fee5d9';
     })
     const style = (feature => {
-        return ({
-            fillColor: mapPolygonColorToShuban(feature.properties.shuban),
-            weight: 2,
-            opacity: 1,
-            color: mapPolygonColorToShuban(feature.properties.shuban),
-            dashArray: '2',
-            fillOpacity: 0
-        });
+        if (selectedRinpans.includes(feature.properties.shuban)) {
+            return ({
+                fillColor: mapPolygonColorToShuban(feature.properties.shuban),
+                weight: 2,
+                opacity: 1,
+                color: mapPolygonColorToShuban(feature.properties.shuban),
+                dashArray: '2',
+                fillOpacity: 0.8
+            });
+        } else {
+            return ({
+                fillColor: mapPolygonColorToShuban(feature.properties.shuban),
+                weight: 2,
+                opacity: 1,
+                color: mapPolygonColorToShuban(feature.properties.shuban),
+                dashArray: '2',
+                fillOpacity: 0
+            });
+        }
+
     });
     const detailStyle = (feature => {
-        return ({
-            fillColor: mapPolygonColorToShuban(feature.properties.shuban),
-            weight: 1,
-            opacity: 1,
-            color: mapPolygonColorToShuban(feature.properties.shuban),
-            dashArray: '2 5',
-            fillOpacity: 0
-        });
+        if (selectedRinpans.includes(feature.properties.shuban)) {
+            return ({
+                fillColor: mapPolygonColorToShuban(feature.properties.shuban),
+                weight: 2,
+                opacity: 1,
+                color: mapPolygonColorToShuban(feature.properties.shuban),
+                dashArray: '2',
+                fillOpacity: 0.8
+            });
+        } else {
+            return ({
+                fillColor: mapPolygonColorToShuban(feature.properties.shuban),
+                weight: 1,
+                opacity: 1,
+                color: mapPolygonColorToShuban(feature.properties.shuban),
+                dashArray: '2 5',
+                fillOpacity: 0
+            });
+        }
     });
     const selectedStyle = (feature => {
         return ({
@@ -386,7 +410,9 @@ const YambaruNationalForestLayer = () => {
             layer.setStyle({ fillOpacity: 0 })
         });
         layer.on('click', function (e) {
-            layer.setStyle({ fillOpacity: 0.8 })
+            selectedRinpans.push(feature.properties.shuban);
+            console.log(selectedRinpans);
+            rinpanRef.current.resetStyle();
         });
     }
     if (data) {
@@ -401,6 +427,7 @@ const YambaruNationalForestLayer = () => {
                     data={data}
                     style={style}
                     onEachFeature={onEachRinpan}
+                    ref={rinpanRef}
                 />
                 <GeoJSON
                     data={detailData}
