@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, memo, useCallback } from "react";
+import React, { useEffect, useState, useRef, memo, useCallback, createContext, useContext } from "react";
 import { Link as RouterLink } from 'react-router-dom';
 import L from "leaflet";
 import { makeStyles } from '@material-ui/core/styles';
@@ -104,7 +104,6 @@ export const useWindowDimensions = () => {
         const { innerWidth: width, innerHeight: height } = window;
         return { width, height };
     }
-
     const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
     useEffect(() => {
         const onResize = () => {
@@ -271,6 +270,29 @@ const Copyright = () => {
     );
 };
 
+const SelectedRinpansContext = createContext();
+
+const useSelectedRinpansContext = () => {
+    return useContext(SelectedRinpansContext);
+};
+
+export const SelectedRinpansProvider = ({ children }) => {
+    const [selectedRinpans, setSelectedRinpans] = useState([]);
+    const pushRinpan = (rinpan) => { setSelectedRinpans((selectedRinpans) => [...selectedRinpans, rinpan]) };
+    const popRinpan = (rinpan) => { setSelectedRinpans((selectedRinpans) => selectedRinpans.map(eachRinpan => eachRinpan !== rinpan)) };
+    const value = {
+        selectedRinpans,
+        setSelectedRinpans,
+        pushRinpan,
+        popRinpan,
+    }
+    return (
+        <SelectedRinpansContext.Provider value={value}>
+            {children}
+        </SelectedRinpansContext.Provider>
+    )
+};
+
 const YambaruNaturalParkLayer = () => {
     const [data, setData] = React.useState();
     const map = useMap();
@@ -301,11 +323,6 @@ const YambaruNaturalParkLayer = () => {
         });
     });
     if (data) {
-        // These next 3 lines purely for debuggins:
-        const geojsonObject = L.geoJSON(data);
-        map.fitBounds(geojsonObject.getBounds());
-        console.log(geojsonObject);
-        // end debugging
         return (
             <GeoJSON
                 data={data}
@@ -319,7 +336,7 @@ const YambaruNaturalParkLayer = () => {
 const YambaruNationalForestLayer = () => {
     const [data, setData] = useState();
     const [detailData, setDetailData] = useState();
-    const selectedRinpans = [];
+    const { selectedRinpans, pushRinpan, popRinpan } = useSelectedRinpansContext();
     const map = useMap();
     const rinpanRef = useRef();
     useEffect(() => {
@@ -410,17 +427,11 @@ const YambaruNationalForestLayer = () => {
             layer.setStyle({ fillOpacity: 0 })
         });
         layer.on('click', function (e) {
-            selectedRinpans.push(feature.properties.shuban);
-            console.log(selectedRinpans);
+            pushRinpan(feature.properties.shuban);
             rinpanRef.current.resetStyle();
         });
     }
     if (data) {
-        // These next 3 lines purely for debuggins:
-        const geojsonObject = L.geoJSON(data);
-        map.fitBounds(geojsonObject.getBounds());
-        console.log(geojsonObject);
-        // end debugging
         return (
             <div>
                 <GeoJSON
@@ -464,6 +475,22 @@ const Legend = ({ map }) => {
     return null;
 }
 
+
+const SupportCard = () => {
+    const {selectedRinpans} = useSelectedRinpansContext();
+    return (
+        <Card>
+            <CardContent>
+                <Typography>
+                    ※本サービスはまだβ版のため、機能不足ですがご容赦ください
+                    {
+                        selectedRinpans.map(rinpan => <li>{rinpan}</li>)
+                    }
+                </Typography>
+            </CardContent>
+        </Card>
+    )
+};
 const Map = (props) => {
     const classes = useStyles();
     const [map, setMap] = useState(null);
@@ -471,49 +498,45 @@ const Map = (props) => {
     const { width, height } = useWindowDimensions();
     return (
         <div>
-            <CssBaseline />
-            <Header />
-            <div className={classes.content}>
-                <div className={classes.toolbar} />
-                <main className={classes.content}>
-                    <div className={classes.appBarSpacer} />
-                    <Grid container spacing={1}>
-                        <Grid item xs={12} md={4}>
-                            <Card>
-                                <CardContent>
-                                    <Typography>
-                                        ※本サービスはまだβ版のため、機能不足ですがご容赦ください
-                                    </Typography>
-                                </CardContent>
-                            </Card>
+            <SelectedRinpansProvider>
+                <CssBaseline />
+                <Header />
+                <div className={classes.content}>
+                    <div className={classes.toolbar} />
+                    <main className={classes.content}>
+                        <div className={classes.appBarSpacer} />
+                        <Grid container spacing={1}>
+                            <Grid item xs={12} md={4}>
+                                <SupportCard />
+                            </Grid>
+                            <Grid item xs={12} md={8}>
+                                <Card>
+                                    <CardContent>
+                                        <MapContainer
+                                            style={{ height: "80vh", width: "100%" }}
+                                            doubleClickZoom={false}
+                                            id="mapId"
+                                            zoom={18}
+                                            center={[128.252335, 26.737332]}
+                                            whenCreated={setMap}>
+                                            <YambaruNaturalParkLayer />
+                                            <YambaruNationalForestLayer />
+                                            <TileLayer
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                attribution="地理院地図 https://maps.gsi.go.jp/development/ichiran.html"
+                                            />
+                                            <Legend map={map} />
+                                        </MapContainer>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
                         </Grid>
-                        <Grid item xs={12} md={8}>
-                            <Card>
-                                <CardContent>
-                                    <MapContainer
-                                        style={{ height: "80vh", width: "100%" }}
-                                        doubleClickZoom={false}
-                                        id="mapId"
-                                        zoom={18}
-                                        center={[128.252335, 26.737332]}
-                                        whenCreated={setMap}>
-                                        <YambaruNaturalParkLayer />
-                                        <YambaruNationalForestLayer />
-                                        <TileLayer
-                                            url="https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png"
-                                            attribution="地理院地図 https://maps.gsi.go.jp/development/ichiran.html"
-                                        />
-                                        <Legend map={map} />
-                                    </MapContainer>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    </Grid>
-                    <Box pt={4}>
-                        <Copyright />
-                    </Box>
-                </main>
-            </div>
+                        <Box pt={4}>
+                            <Copyright />
+                        </Box>
+                    </main>
+                </div>
+            </SelectedRinpansProvider>
         </div>
     );
 };
