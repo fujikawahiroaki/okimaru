@@ -61,6 +61,15 @@ export const SelectedRinpansProvider = ({ children }) => {
     )
 };
 
+function useStableCallback(callback) {
+    const callbackRef = useRef(callback);
+    callbackRef.current = callback;
+    const stableCallback = useCallback((...args) => {
+        return callbackRef.current(...args);
+    }, []);
+    return stableCallback;
+}
+
 const YambaruNaturalParkLayer = () => {
     const [parkData, setParkData] = useState();
     const map = useMap();
@@ -161,20 +170,18 @@ const YambaruNationalForestLayer = () => {
             });
         }
     });
-    const onEachRinpan = (feature, layer) => {
-        const shubanName = feature.properties.shuban;
-        layer.on('mouseover', function (e) {
-            if (!selectedRinpans.includes(feature.properties.shuban)) {
-                layer.setStyle({ fillOpacity: 0.5 })
-            }
-        });
-        layer.on('mouseout', function (e) {
-            if (!selectedRinpans.includes(feature.properties.shuban)) {
-                layer.setStyle({ fillOpacity: 0 })
-            }
-        });
-        layer.on('click', function (e) {
-            console.log(rinpanRef.current)
+    const rinpanMouseOver = (feature, layer) => {
+        if (!selectedRinpans.includes(feature.properties.shuban)) {
+            layer.setStyle({ fillOpacity: 0.5 })
+        };
+    };
+    const rinpanMouseOut = (feature, layer) => {
+        if (!selectedRinpans.includes(feature.properties.shuban)) {
+            layer.setStyle({ fillOpacity: 0 })
+        }
+    };
+    const rinpanOnClick = (feature, layer) => {
+        console.log(rinpanRef.current)
             if (isChoicedRinpan(feature.properties.shuban)) {
                 console.log("もうあるよ")
                 console.log(selectedRinpans)
@@ -185,6 +192,20 @@ const YambaruNationalForestLayer = () => {
                 pushRinpan(feature.properties.shuban);
             }
             rinpanRef.current.resetStyle();
+    };
+    const stableRinpanMouseOver = useStableCallback(rinpanMouseOver);
+    const stableRinpanMouseOut = useStableCallback(rinpanMouseOut);
+    const stableRinpanOnClick = useStableCallback(rinpanOnClick);
+    const onEachRinpan = (feature, layer) => {
+        const shubanName = feature.properties.shuban;
+        layer.on('mouseover', function (e) {
+            stableRinpanMouseOver(feature, layer);
+        });
+        layer.on('mouseout', function (e) {
+            stableRinpanMouseOut(feature, layer);
+        });
+        layer.on('click', function (e) {
+            stableRinpanOnClick(feature, layer);
         });
         layer.bindTooltip(`${shubanName}`, { permanent: true, direction: "center" }).openTooltip();
     }
@@ -246,6 +267,8 @@ const SupportCard = () => {
         </Card>
     )
 };
+
+
 const Map = (props) => {
     const classes = useStyles();
     const [map, setMap] = useState(null);
