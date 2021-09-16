@@ -13,6 +13,7 @@ import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
 import Box from "@material-ui/core/Box";
 import { MapContainer, TileLayer, GeoJSON, useMap, Tooltip, Popup } from "react-leaflet";
+import { booleanOverlap} from "`@turf/boolean-overlap";
 import YambaruNaturalPark from '../geojsons/yambaru_natural_park';
 import YambaruNationalForest from '../geojsons/yambaru_national_forest_shuban_ver';
 import YambaruNationalForestDetail from '../geojsons/yambaru_national_forest'
@@ -61,12 +62,12 @@ export const SelectedRinpansProvider = ({ children }) => {
 };
 
 const YambaruNaturalParkLayer = () => {
-    const [data, setData] = React.useState();
+    const [parkData, setParkData] = useState();
     const map = useMap();
     useEffect(() => {
-        setData(YambaruNaturalPark);
+        setParkData(YambaruNaturalPark);
     }, []);
-    const mapPolygonColorToArea = (area => {
+    const mapPolygonColorToParkArea = (area => {
         return area === "普通地域"
             ? NP_NOMAL_AREA
             : area === "特別保護地区"
@@ -79,9 +80,9 @@ const YambaruNaturalParkLayer = () => {
                             ? NP_THIRD_AREA
                             : NP_OTHER_AREA;
     })
-    const style = (feature => {
+    const parkStyle = (feature => {
         return ({
-            fillColor: mapPolygonColorToArea(feature.properties.area),
+            fillColor: mapPolygonColorToParkArea(feature.properties.area),
             weight: 1,
             opacity: 1,
             color: 'white',
@@ -89,11 +90,11 @@ const YambaruNaturalParkLayer = () => {
             fillOpacity: 0.5
         });
     });
-    if (data) {
+    if (parkData) {
         return (
             <GeoJSON
-                data={data}
-                style={style}
+                data={parkData}
+                style={parkStyle}
             />)
     } else {
         return "データを読み込み中です...";
@@ -101,14 +102,14 @@ const YambaruNaturalParkLayer = () => {
 };
 
 const YambaruNationalForestLayer = () => {
-    const [data, setData] = useState();
-    const [detailData, setDetailData] = useState();
+    const [shubanData, setShubanData] = useState();
+    const [shouhanData, setshouhanData] = useState();
     const { selectedRinpans, pushRinpan, popRinpan, isChoicedRinpan } = useSelectedRinpansContext();
     const map = useMap();
     const rinpanRef = useRef();
     useEffect(() => {
-        setData(YambaruNationalForest);
-        setDetailData(YambaruNationalForestDetail);
+        setShubanData(YambaruNationalForest);
+        setshouhanData(YambaruNationalForestDetail);
     }, []);
     const mapPolygonColorToShuban = (shuban => {
         return shuban <= 46
@@ -117,7 +118,7 @@ const YambaruNationalForestLayer = () => {
                 ? '#18fc03'
                 : '#fee5d9';
     })
-    const style = (feature => {
+    const shubanStyle = (feature => {
         if (selectedRinpans.includes(feature.properties.shuban)) {
             return ({
                 fillColor: mapPolygonColorToShuban(feature.properties.shuban),
@@ -139,7 +140,7 @@ const YambaruNationalForestLayer = () => {
         }
 
     });
-    const detailStyle = (feature => {
+    const shouhanStyle = (feature => {
         if (selectedRinpans.includes(feature.properties.shuban)) {
             return ({
                 fillColor: mapPolygonColorToShuban(feature.properties.shuban),
@@ -191,12 +192,12 @@ const YambaruNationalForestLayer = () => {
         return (
             <div>
                 <GeoJSON
-                    data={detailData}
-                    style={detailStyle}
+                    data={shouhanData}
+                    style={shouhanStyle}
                 />
                 <GeoJSON
-                    data={data}
-                    style={style}
+                    data={shubanData}
+                    style={shubanStyle}
                     onEachFeature={onEachRinpan}
                     ref={rinpanRef}
                 />
